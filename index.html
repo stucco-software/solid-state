@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="/style.css">
+  <title>Solid State</title>
+</head>
+<body>
+  <main>
+    <h1>Solid State</h1>
+
+    <p>
+      An example of how to <a href="https://local-persistence.rdf.systems/">authenticate</a> an application with Solid, and <a href="https://local-persistence.rdf.systems/">persist data</a> to a Solid Pod.
+    </p>
+
+    <pre><code>
+const appConfig = {
+  redirect_uri,
+  client_id
+}
+const app = initializeApp(appConfig)
+const db = app.webID(url)
+&lt;!-- or -->
+const db = app.provider(URL)
+    </code></pre>
+
+    <blockquote>
+      If we store a local cache to speed up requests, how can that cache (which we can set locally without being authenticated) interact with the remote store in a unauthenticated session?
+    </blockquote>
+
+    <h3>Persist Key:Value Data</h3>
+
+    <p>
+      An <b>Entity</b> is identified by its <b>@id</b>.
+    </p>
+
+    <pre><code>
+try {
+  let ref = await db.setItem(@id, 'val')
+} catch (e) {
+  console.error("Error setting entity: ", e);
+}
+    </code></pre>
+
+    <p>
+      The `val` argument can be arbitrary serializable data.
+    </p>
+
+    <p>
+      Get a single item by @id:
+    </p>
+    <pre><code>
+let ref = await db.getItem(@id)
+    </code></pre>
+
+    <p>
+      Listen to entities for updates:
+    </p>
+
+    <pre><code>
+const unsubscribe = db.subscribe(@id, (ref) => {
+  // …
+})
+    </code></pre>
+
+    <p>
+      And detach listeners:
+    </p>
+    <pre><code>
+unsubscribe()
+    </code></pre>
+
+    <p>
+      Entities can be acted on with regular CRUD operations.
+    </p>
+    <pre><code>
+let ref = await db.updateItem(@id, 'val')
+let ref = await db.deleteItem(@id)
+    </code></pre>
+
+  </main>
+
+  <footer>
+    <p>Part of the <a href="https://rdf.systems/">RDF Systems</a> Project</p>
+    <p>
+      2024 <a href="https://stucco.software/">Stucco Software</a>
+    </p>
+  </footer>
+  <script type="module" type="text/javascript" src="/main.js"></script>
+</body>
+</html>
