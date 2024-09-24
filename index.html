@@ -8,11 +8,56 @@
 </head>
 <body>
   <main>
-    <h1>Solid State</h1>
+    <h1>Solid State KV</h1>
 
     <p>
       An example of how to <a href="https://local-persistence.rdf.systems/">authenticate</a> an application with Solid, and <a href="https://local-persistence.rdf.systems/">persist data</a> to a Solid Pod.
     </p>
+
+    <p>
+      Explore how it works on the <code><a href="/playground">KV Playground</a></code>
+    </p>
+
+    <h2>Table of Contents</h2>
+    <ol>
+      <li>Applications</li>
+      <li>
+        Entities
+      </li>
+      <li>
+        Persist Data
+        <ol>
+          <li>Post</li>
+          <li>Put</li>
+          <li>Patch</li>
+          <li>Delete</li>
+        </ol>
+      </li>
+      <li>
+        Relationships
+      </li>
+      <li>Typed Values</li>
+      <li>Schemas</li>
+      <li>Getting Entries</li>
+      <li>
+        Queries
+        <ol>
+          <li>Simple Queries</li>
+          <li>Compound Queries</li>
+          <li>Pagination</li>
+        </ol>
+      </li>
+      <li>
+        Introspection
+      </li>
+      <li>
+        Type Checking
+      </li>
+    </ol>
+
+    <h2>
+      Applications
+    </h2>
 
     <pre><code>
 const appConfig = {
@@ -26,7 +71,7 @@ const db = app.provider(URL)
     </code></pre>
 
     <p>
-      Other applications exist too:
+      Other applications exist too, for non-SOLID SPARQL providers:
     </p>
     <pre><code>
 const appConfig = {
@@ -42,7 +87,25 @@ const db = app()
       If we store a local cache to speed up requests, how can that cache (which we can set locally without being authenticated) interact with the remote store in a unauthenticated session?
     </blockquote>
 
-    <h3>Persist Key:Value Data</h3>
+
+    <h2>Entities</h2>
+
+    <p>
+      Entities are stored as flat objects, that is sets of key:value pairs. Values can be of any given <a href="#">type</a>. Nested objects are created by managing <a href="#">relationships</a> between entities.
+    </p>
+
+    <p>
+      Entities have two special keys: <code>@id</code> and <code>@type</code>.
+    </p>
+
+    <p>
+      The <code>@id</code> key is used to uniquely identify the entity.
+    </p>
+    <p>
+      The <code>@type</code> key is used to classify or attach a <a href="#">schema</a> to the entity.
+    </p>
+
+    <h2>Persist Data</h2>
 
     <p>
       An <b>Entity</b> is identified by its <b>@id</b>. Create a new item \ with <code>db.post</code>.
@@ -60,6 +123,8 @@ ref = {
 }
     </code></pre>
 
+    <h3>Post</h3>
+
     <p>
       Use <code>db.post</code> to replace an entire entity with a new value:
     </p>
@@ -76,8 +141,10 @@ ref = {
 }
   </code></pre>
 
+    <h3>Put</h3>
+
     <p>
-      Replace the value of a given key with `db.put`.
+      Replace the value of a given key with <code>db.put</code>.
     </p>
 
     <pre><code>
@@ -92,7 +159,13 @@ ref = {
     </code></pre>
 
     <p>
-      Add a value to a key with `db.patch`
+      <mark>Put and Post are similar but distinct! Post will replace the entire Entity, but Put will replace jut the specified keys.</mark>
+    </p>
+
+    <h3>Patch</h3>
+
+    <p>
+      Add a value to a key with <code>db.patch</code>
     </p>
 
     <pre><code>
@@ -106,8 +179,10 @@ ref = {
 }
     </code></pre>
 
+    <h3>Delete</h3>
+
     <p>
-      Delete a key/value pair with `db.delete`
+      Delete a key/value pair with <code>db.delete</code>
     </p>
     <pre><code>
 let ref = await db.delete(@id, {
@@ -124,11 +199,7 @@ ref = {
       Or delete the entire entity
     </p>
     <pre><code>
-try {
-  let ref = await db.delete('hummus')
-} catch (e) {
-  console.error("Error setting entity: ", e);
-}
+let ref = await db.delete('hummus')
 ref = null
     </code></pre>
 
@@ -188,6 +259,9 @@ db.put("chickpeas", {
 })
     </code></pre>
 
+    <p>
+      Values can also be typed as <code>Date</code>, <code>Time</code>, <code>DateTime</code>, <code>URI</code>, <code>Integer</code>, <code>Float</code>, <code>Decimal</code>, <code>Double</code>.
+    </p>
 
     <h2>
       Schemas
@@ -219,6 +293,10 @@ let ref = await db.post("vegetarian", {
 </code></pre>
 
     <p>
+      <mark>Okay but _why_ would you do this?</mark>
+    </p>
+
+    <p>
       Keys can also be given schemas:
     </p>
     <pre><code>
@@ -228,6 +306,10 @@ let vegSchema = await db.schema('vegetarian', {
   "@range": Boolean
 })
     </code></pre>
+
+    <p>
+      <mark>See above. Does this enable static type checking by surfacing errors? Can we use this to do introspection?</mark>
+    </p>
 
     <h2>
       Getting Entities
