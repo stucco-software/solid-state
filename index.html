@@ -19,10 +19,23 @@ const appConfig = {
   redirect_uri,
   client_id
 }
-const app = initializeApp(appConfig)
+const app = solidApp(appConfig)
 const db = app.webID(url)
 &lt;!-- or -->
 const db = app.provider(URL)
+    </code></pre>
+
+    <p>
+      Other applications exist too:
+    </p>
+    <pre><code>
+const appConfig = {
+  endpoint,
+  username,
+  password
+}
+const app = sparqlApp(appConfig)
+const db = app()
     </code></pre>
 
     <blockquote>
@@ -32,52 +45,289 @@ const db = app.provider(URL)
     <h3>Persist Key:Value Data</h3>
 
     <p>
-      An <b>Entity</b> is identified by its <b>@id</b>.
+      An <b>Entity</b> is identified by its <b>@id</b>. Create a new item \ with <code>db.post</code>.
     </p>
 
     <pre><code>
-try {
-  let ref = await db.setItem(@id, 'val')
-} catch (e) {
-  console.error("Error setting entity: ", e);
+let ref = await db.post("hummus", {
+  "@type": "Food",
+  "ingredient": "Chickpeas and Lemon"
+})
+ref = {
+  "@id": "hummus",
+  "@type": "Food",
+  "ingredient": "Chickpeas and Lemon"
 }
     </code></pre>
 
     <p>
-      The `val` argument can be arbitrary serializable data.
+      Use <code>db.post</code> to replace an entire entity with a new value:
     </p>
+
+  <pre><code>
+let ref = await db.post("hummus", {
+  "@type": "Dish",
+  "ingredient": "Garbanzo Beans"
+})
+ref = {
+  "@id": "hummus",
+  "@type": "Dish",
+  "ingredient": "Garbanzo Beans"
+}
+  </code></pre>
+
+    <p>
+      Replace the value of a given key with `db.put`.
+    </p>
+
+    <pre><code>
+let ref = await db.put('hummus, {
+  "ingredient": "Chickpeas",
+})
+ref = {
+  "@id": "hummus",
+  "@type": "Dish",
+  "ingredient": "Chickpeas"
+}
+    </code></pre>
+
+    <p>
+      Add a value to a key with `db.patch`
+    </p>
+
+    <pre><code>
+let ref = await db.patch('hummus', {
+  ingredient: "Lemon",
+})
+ref = {
+  "@id": "hummus",
+  "@type": "Dish",
+  "ingredient": ["Chickpeas", "Lemon"]
+}
+    </code></pre>
+
+    <p>
+      Delete a key/value pair with `db.delete`
+    </p>
+    <pre><code>
+let ref = await db.delete(@id, {
+  "ingredient": "Lemon",
+})
+ref = {
+  "@id": "hummus",
+  "@type": "Dish",
+  "ingredient": "Chickpeas"
+}
+    </code></pre>
+
+    <p>
+      Or delete the entire entity
+    </p>
+    <pre><code>
+try {
+  let ref = await db.delete('hummus')
+} catch (e) {
+  console.error("Error setting entity: ", e);
+}
+ref = null
+    </code></pre>
+
+    <h2>
+      Relationships
+    </h2>
+
+    <p>
+      Entities can be related to each other.
+    </p>
+
+    <pre><code>
+let hummus = await db.post("hummus", {
+  "@type": "Dish"
+})
+let chickpeas = await db.post("chickpeas", {
+  "@type": "Ingredient",
+  "aka": "Garbanzo Beans"
+})
+
+let ref = await db.put('hummus, {
+  "ingredient": {
+    "@id": "chickpeas"
+  }
+})
+ref = {
+  "@id": "hummus",
+  "@type": "Dish",
+  "ingredient": "chickpeas"
+}
+    </code></pre>
+
+    <h2>
+      Typed Values
+    </h2>
+
+    <p>Values can be strings, booleans, and numbers. Types can be specified as well:</p>
+
+    <pre><code>
+db.put("chickpeas", {
+  "aka": {
+    @type: String,
+    value: "Garbs"
+  }
+})
+db.put("chickpeas", {
+  "gramsPerUnit": {
+    @type: Number,
+    value: 42
+  }
+})
+db.put("chickpeas", {
+  "vegetarian": {
+    @type: Number,
+    value: true
+  }
+})
+    </code></pre>
+
+
+    <h2>
+      Schemas
+    </h2>
+    <p>
+      Entities can be given schemas with the <code>@type</code> key. A <code>@type</code> can be defined with a schema:
+    </p>
+
+    <pre><code>
+let dishSchema = await db.schema("Dish", {
+  "name": String,
+  "ingredient": ID
+})
+
+let ingredientSchema = await db.schema("Ingredient", {
+  "name": String,
+  "aka": String,
+  "vegetarian": Boolean
+})
+    </code></pre>
+
+    <p>
+      Keys can also be given data:
+    </p>
+    <pre><code>
+let ref = await db.post("vegetarian", {
+  "description": "Does this ingredient made entirely from non-animal products?"
+})
+</code></pre>
+
+    <p>
+      Keys can also be given schemas:
+    </p>
+    <pre><code>
+let vegSchema = await db.schema('vegetarian', {
+  "description": String,
+  "@domain": "Ingredient",
+  "@range": Boolean
+})
+    </code></pre>
+
+    <h2>
+      Getting Entities
+    </h2>
 
     <p>
       Get a single item by @id:
     </p>
     <pre><code>
-let ref = await db.getItem(@id)
+let ref = await db.get('hummus')
+ref = {
+  "@id": "hummus",
+  "@type": "Dish",
+  "name": "Hummus",
+  "ingredient": ["chickpeas", "lemon"]
+}
     </code></pre>
 
     <p>
-      Listen to entities for updates:
+      Get a single item with specified keys:
     </p>
-
     <pre><code>
-const unsubscribe = db.subscribe(@id, (ref) => {
-  // …
+let ref = await db.get('hummus', {
+  "ingredient": ""
 })
+ref = {
+  "@id": "hummus",
+  "ingredient": ["chickpeas", "lemon"]
+}
     </code></pre>
 
     <p>
-      And detach listeners:
+      Get related items with specified keys:
     </p>
     <pre><code>
-unsubscribe()
+let ref = await db.get('hummus', {
+  "ingredient": {
+    "name": "",
+    "aka": ""
+  }
+})
+ref = {
+  "@id": "hummus",
+  "ingredient": [{
+    "name": "Chickpeas",
+    "aka": ["Garbanzos", "Garbs"]
+  },{
+    "name": "Lemon"
+  }]
+}
     </code></pre>
 
     <p>
-      Entities can be acted on with regular CRUD operations.
+      Relationships can be reversed:
     </p>
     <pre><code>
-let ref = await db.updateItem(@id, 'val')
-let ref = await db.deleteItem(@id)
+let ref = await db.get('chickpeas', {
+  "name": "",
+  "usedIn": {
+    "@reverse": "ingredient"
+  }
+})
+ref = {
+  "@id": chickpeas,
+  "usedIn": "hummus"
+}
     </code></pre>
+
+    <h2>Queries</h2>
+
+    <p>
+      Let's say we want to get entities by values other then their <b>@id</b>. How can we do this?
+    </p>
+
+    <h3>
+      Querying Simple Values
+    </h3>
+
+    <pre><code>
+try {
+  let collection = await db.query(
+    where(key, operator, value)
+  )
+} catch (e) {
+  console.error("Error querying the store: ", e);
+}
+
+try {
+  let collection = await db.query(
+    or (
+      where(key, operator, value),
+      where(key, operator, other)
+    )
+  )
+} catch (e) {
+  console.error("Error querying the store: ", e);
+}
+    </code></pre>
+
+
 
   </main>
 
